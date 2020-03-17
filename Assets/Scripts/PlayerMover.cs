@@ -25,6 +25,7 @@ public class PlayerMover : MainScript
         float movement = GetMovement() * m_MovementSpeed;
         Vector3 toMove = Jump(movement);
         Move(toMove);
+        Debug.Log(RBody.velocity);
     }
 
     private void Move(Vector3 _direction)
@@ -39,14 +40,29 @@ public class PlayerMover : MainScript
     private Vector3 Jump(float _movement)
     {
         bool isGrounded = IsGrounded();
-        Debug.Log(isGrounded);
         Vector3 toReturn = new Vector3(0, 0, _movement);
         if (Input.GetButton("Jump") && isGrounded)
         {
-            RBody.AddForce(
-                Vector3.up * m_JumpSpeed,
+            //RBody.AddForce(
+            //    Vector3.up * m_JumpSpeed,
+            //    ForceMode.VelocityChange
+            //    );
+            RBody.AddExplosionForce(
+                m_JumpSpeed,
+                this.transform.position - new Vector3(0,Collider.bounds.extents.y, 0),
+                3f,
+                10f,
                 ForceMode.VelocityChange
                 );
+
+            if (RBody.velocity.y >= 10)
+                RBody.velocity = new Vector3(
+                    RBody.velocity.x,
+                    10,
+                    RBody.velocity.z
+                    );
+
+            Debug.Log(this.transform.position - new Vector3(0, (this.transform.position.y - Collider.bounds.extents.y), 0));
         }
 
 
