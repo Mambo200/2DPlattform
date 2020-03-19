@@ -15,20 +15,53 @@ public class PlayerMover : MainScript
     /// </summary>
     private Collider Collider { get; set; }
 
+    /// <summary>
+    /// Movementspeed of Player
+    /// </summary>
     public float m_MovementSpeed;
+
+    /// <summary>
+    /// Jump velocity of Player
+    /// </summary>
     public float m_JumpSpeed;
 
+    /// <summary>
+    /// Dash is allowed
+    /// </summary>
     [Header("Dash Variables")]
     public bool m_DashAllowed;
+
+    /// <summary>
+    /// Multiplier of Dash speed (add to <see cref="m_MovementSpeed"/>)
+    /// </summary>
     public float m_DashSpeedMultiplier;
+
+    /// <summary>
+    /// Duration of Dash
+    /// </summary>
     public float m_DashDuration;
 
+    /// <summary>
+    /// Player can Jump in the Air once while dash
+    /// </summary>
     [SerializeField]
     private bool m_JumpInAirWhileDash;
+
+    /// <summary>
+    /// Player already jumped in the air
+    /// </summary>
     private bool jumpedInAir;
 
+    /// <summary>
+    /// Player is currently Dashing
+    /// </summary>
     public bool InDash { get; private set; }
 
+    /// <summary>
+    /// When Dash beginns, value will be set to <see cref="m_DashDuration"/>. 
+    /// If this hits 0, Player stopps dashing 
+    /// (for more information, see <see cref="GetDash(float)"/>)
+    /// </summary>
     private float tempDashTime;
 
     /// <summary>
@@ -40,8 +73,16 @@ public class PlayerMover : MainScript
     public override void Start()
     {
         RBody = GetComponent<Rigidbody>();
-        Collider = GetComponent<CapsuleCollider>();
-
+        Collider = GetComponent<MeshCollider>();
+        Respawnmanager.Get.AddItem(
+            this.gameObject,
+            () =>
+            {
+                tempDashTime = 0;
+                jumpedInAir = false;
+                InDash = false;
+            }
+            );
     }
 
     // Update is called once per frame
@@ -87,22 +128,20 @@ public class PlayerMover : MainScript
     /// <returns></returns>
     private float GetDash(float _currentMovement)
     {
+        // Check if Player is NOT Dashing, if Player is moving and Player pressed the Dash-Button
         if(!InDash && _currentMovement != 0  && Input.GetAxisRaw("Dash") != 0)
         {
+            // Start dashing
             _currentMovement *= m_DashSpeedMultiplier;
             tempDashTime = m_DashDuration;
-            InDash = true;
             DashBeginn();
         }
         else if (InDash)
         {
             _currentMovement *= m_DashSpeedMultiplier;
-            tempDashTime -= Time.deltaTime;
             DashStay();
             if (tempDashTime <= 0 && Grounded)
             {
-                InDash = false;
-                jumpedInAir = false;
                 DashEnd();
             }
         }
@@ -169,23 +208,28 @@ public class PlayerMover : MainScript
     #region Dash Methods
     private void DashBeginn()
     {
-        Debug.Log("Dash Begin");
+        InDash = true;
     }
 
     private void DashStay()
     {
-        Debug.Log("Dash Stay");
+        tempDashTime -= Time.deltaTime;
     }
 
     private void DashJump()
     {
-        Debug.Log("Dash Jump");
+
     }
 
     private void DashEnd()
     {
-        Debug.Log("Dash End");
+        InDash = false;
+        jumpedInAir = false;
     }
-
     #endregion
+
+    private void OnDestroy()
+    {
+        MainRespawnManager.Get.RemoveItem(this.gameObject);
+    }
 }
