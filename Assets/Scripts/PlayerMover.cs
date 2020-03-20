@@ -73,7 +73,7 @@ public class PlayerMover : MainScript
     public override void Start()
     {
         RBody = GetComponent<Rigidbody>();
-        Collider = GetComponent<MeshCollider>();
+        Collider = GetComponent<CapsuleCollider>();
         Respawnmanager.Get.AddItem(
             this.gameObject,
             () =>
@@ -129,7 +129,7 @@ public class PlayerMover : MainScript
     private float GetDash(float _currentMovement)
     {
         // Check if Player is NOT Dashing, if Player is moving and Player pressed the Dash-Button
-        if(!InDash && _currentMovement != 0  && Input.GetAxisRaw("Dash") != 0)
+        if(Grounded && !InDash && _currentMovement != 0  && Input.GetAxisRaw("Dash") != 0)
         {
             // Start dashing
             _currentMovement *= m_DashSpeedMultiplier;
@@ -194,11 +194,14 @@ public class PlayerMover : MainScript
     /// </summary>
     private bool IsGrounded()
     {
-        return Physics.Raycast(
+        bool hit = Physics.Raycast(
             transform.position,
             -Vector3.up,
+            out RaycastHit info,
             (Collider.bounds.extents.y + 0.1f)
             );
+
+        return hit;
     }
 
 
@@ -227,6 +230,17 @@ public class PlayerMover : MainScript
         jumpedInAir = false;
     }
     #endregion
+
+    public void JumpBoost()
+    {
+        RBody.velocity = new Vector3(
+            RBody.velocity.x,
+            m_JumpSpeed,
+            RBody.velocity.z
+            );
+
+        jumpedInAir = true;
+    }
 
     private void OnDestroy()
     {
