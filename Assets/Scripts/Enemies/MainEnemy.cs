@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public abstract class MainEnemy : MonoBehaviour
+public abstract class MainEnemy : MainScript
 {
     [SerializeField]
     protected float m_Health;
@@ -13,22 +13,27 @@ public abstract class MainEnemy : MonoBehaviour
     [Tooltip("Speed in Z and Y Direction")]
     protected Vector2 m_Speed;
 
+    public int Index { get; private set; }
+
     public MoveDirection Movedirection { get => m_MoveDirection; protected set => m_MoveDirection = value; }
     protected MoveDirection CurrentDirection { get; set; }
     public Vector3 StartPosition { get; private set; }
     protected Rigidbody RBody { get; private set; }
     // Start is called before the first frame update
-    protected virtual void Start()
+    public override void Start()
     {
+        base.Start();
         StartPosition = this.gameObject.transform.position;
         SetCurrentDirection();
         RBody = GetComponent<Rigidbody>();
+
+        Index = EnemyManager.Get.AddEnemy(this);
     }
 
     // Update is called once per frame
-    protected virtual void Update()
+    public override void Update()
     {
-        
+        base.Update();
     }
 
     private void SetCurrentDirection()
@@ -63,6 +68,7 @@ public abstract class MainEnemy : MonoBehaviour
 
     private void Die()
     {
+        EnemyManager.Get.RemoveEnemy(Index);
         Destroy(this.gameObject);
     }
 }

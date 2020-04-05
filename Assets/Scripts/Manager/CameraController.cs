@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CameraController : MonoBehaviour
+public class CameraController : MainScript
 {
     public float m_DistanceToPlayer;
     public float m_YPositionAbovePlayer;
@@ -10,14 +10,16 @@ public class CameraController : MonoBehaviour
     private GameObject Player { get; set; }
 
     // Start is called before the first frame update
-    void Start()
+    public override void Start()
     {
+        base.Start();
         Player = GameObject.FindGameObjectWithTag("Player");
     }
 
     // Update is called once per frame
-    void Update()
+    public override void Update()
     {
+        base.Update();
         SetCameraPosition(CalculateNewCameraPosition());
     }
 

@@ -45,13 +45,13 @@ public sealed class Bird : MainEnemyAir
         }
     }
     // Start is called before the first frame update
-    protected override void Start()
+    public override void Start()
     {
         base.Start();
     }
 
     // Update is called once per frame
-    protected override void Update()
+    public override void Update()
     {
         base.Update();
 
@@ -137,13 +137,13 @@ public sealed class Bird : MainEnemyAir
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(collision.collider.gameObject.tag != "Player") return;
-
-        Vector3 hitPoint = collision.GetContact(0).point;
-        if (hitPoint.y <= collision.collider.gameObject.transform.position.y)
-        {
-            GetDamage(1);
-            collision.collider.gameObject.GetComponent<PlayerMover>().JumpBoost();
-        }
+        //if(collision.collider.gameObject.tag != "Player") return;
+        //
+        //Vector3 hitPoint = collision.GetContact(0).point;
+        //if (hitPoint.y <= collision.collider.gameObject.transform.position.y)
+        //{
+        //    GetDamage(1);
+        //    collision.collider.gameObject.GetComponent<PlayerMover>().JumpBoost();
+        //}
     }
 }

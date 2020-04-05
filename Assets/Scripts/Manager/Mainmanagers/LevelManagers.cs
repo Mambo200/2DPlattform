@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class LevelManagers : MonoBehaviour
+public abstract class LevelManagers : MainScript
 {
     #region Singleton 
     static LevelManagers instance;
@@ -35,8 +35,9 @@ public abstract class LevelManagers : MonoBehaviour
 
     #region Protected Virtual Methods
     // Start is called before the first frame update
-    protected virtual void Start()
+    public override void Start()
     {
+        base.Start();
         MainCamera = Camera.main;
         Player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerMover>();
     }
