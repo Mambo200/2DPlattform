@@ -13,7 +13,12 @@ public class PlayerMover : MainScript
     /// <summary>
     /// Collider of this Object
     /// </summary>
-    private Collider Collider { get; set; }
+    private Collider[] AllCollider { get; set; }
+
+    /// <summary>
+    /// Collider with trigger of this object
+    /// </summary>
+    private Collider TriggerCollider { get; set; }
 
     /// <summary>
     /// Movementspeed of Player
@@ -73,7 +78,17 @@ public class PlayerMover : MainScript
     public override void Start()
     {
         RBody = GetComponent<Rigidbody>();
-        Collider = GetComponent<CapsuleCollider>();
+        AllCollider = GetComponents<BoxCollider>();
+
+        foreach (Collider item in AllCollider)
+        {
+            if (item.isTrigger)
+            {
+                TriggerCollider = item;
+                break;
+            }
+        }
+
         Respawnmanager.Get.AddItem(
             this.gameObject,
             () =>
@@ -83,6 +98,8 @@ public class PlayerMover : MainScript
                 InDash = false;
             }
             );
+
+        Physics.IgnoreCollision(TriggerCollider, AllCollider[1], true);
     }
 
     // Update is called once per frame
@@ -90,7 +107,7 @@ public class PlayerMover : MainScript
     {
         Grounded = IsGrounded();
         Vector3 toMove = new Vector3(
-            0, 
+            0,
             0,
             GetMovement(m_DashAllowed) * m_MovementSpeed
             );
@@ -105,9 +122,11 @@ public class PlayerMover : MainScript
     /// <param name="_direction">Direction to Move</param>
     private void Move(Vector3 _direction)
     {
-        Vector3 velocity = _direction;
-        velocity.y += RBody.velocity.y;
-        RBody.velocity = velocity;
+        //Vector3 velocity = _direction;
+        //velocity.y += RBody.velocity.y;
+        //RBody.velocity = velocity;
+
+        transform.Translate(_direction * Time.deltaTime);
     }
 
     /// <summary>
@@ -119,7 +138,7 @@ public class PlayerMover : MainScript
         float toReturn = Input.GetAxisRaw("Horizontal");
         if (_dashAllowed) toReturn = GetDash(toReturn);
         return toReturn;
-    } 
+    }
 
     /// <summary>
     /// Get horizontal Dash.
@@ -129,7 +148,7 @@ public class PlayerMover : MainScript
     private float GetDash(float _currentMovement)
     {
         // Check if Player is NOT Dashing, if Player is moving and Player pressed the Dash-Button
-        if(Grounded && !InDash && _currentMovement != 0  && Input.GetAxisRaw("Dash") != 0)
+        if (Grounded && !InDash && _currentMovement != 0 && Input.GetAxisRaw("Dash") != 0)
         {
             // Start dashing
             _currentMovement *= m_DashSpeedMultiplier;
@@ -154,7 +173,7 @@ public class PlayerMover : MainScript
     /// </summary>
     private void Jump()
     {
-        if(Grounded || (InDash && m_JumpInAirWhileDash && !jumpedInAir))
+        if (Grounded || (InDash && m_JumpInAirWhileDash && !jumpedInAir))
             if (Input.GetButton("Jump"))
             {
                 RBody.velocity = new Vector3(
@@ -184,8 +203,9 @@ public class PlayerMover : MainScript
         }
     }
 
-    private void OnCollisionStay(Collision collision)
+    private void OnTriggerEnter(Collider other)
     {
+        bool wasEnemy = TriggerEnemyHitCheck(other);
 
     }
 
@@ -198,13 +218,22 @@ public class PlayerMover : MainScript
             transform.position,
             -Vector3.up,
             out RaycastHit info,
-            (Collider.bounds.extents.y + 0.1f)
+            (AllCollider[1].bounds.extents.y + 0.1f)
             );
 
         return hit;
     }
 
+    private bool TriggerEnemyHitCheck(Collider _other)
+    {
+        if (_other.gameObject.tag != "Enemy") return false;
 
+        MainEnemy enemy = EnemyManager.Get.GetEnemy(_other.gameObject);
+        if (enemy == null) return false;
+        enemy.GetDamage(1);
+        JumpBoost();
+        return true;
+    }
 
 
 

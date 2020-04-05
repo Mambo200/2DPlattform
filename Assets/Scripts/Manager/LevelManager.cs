@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class LevelManager : LevelManagers
 {
-    protected override void Start()
+    public override void Start()
     {
         base.Start();
     }
