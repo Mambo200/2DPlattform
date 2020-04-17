@@ -19,7 +19,7 @@ public class Respawnmanager : MainRespawnManager
     }
 
     // Update is called once per frame
-    protected override void Update()
+    public override void Update()
     {
         base.Update();
     }
