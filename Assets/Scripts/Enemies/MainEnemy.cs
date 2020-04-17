@@ -2,9 +2,53 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody), typeof(Collider))]
 public abstract class MainEnemy : MainScript
 {
+    [Tooltip("Max Y-Value Distance from Enemy start position.\nx: lowest\ny: highest")]
+    [SerializeField]
+    protected Vector2 m_BetweenYPositions;
+
+    [Tooltip("Max Z-Value Distance from Enemy start position.\nx: lowest\ny: highest")]
+    [SerializeField]
+    protected Vector2 m_BetweenZPositions;
+
+    protected float LowestYPosition
+    {
+        get
+        {
+            return StartPosition.y - m_BetweenYPositions.x;
+        }
+    }
+
+    protected float HighestYPosition
+    {
+        get
+        {
+            return StartPosition.y + m_BetweenYPositions.y;
+        }
+    }
+
+    protected float LowestZPosition
+    {
+        get
+        {
+            return StartPosition.z - m_BetweenZPositions.x;
+        }
+    }
+
+    protected float HighestZPosition
+    {
+        get
+        {
+            return StartPosition.z + m_BetweenZPositions.y;
+        }
+    }
+
+    public abstract GroundType Type { get; }
+
+    protected bool GotHitLastFrame { get; private set; }
+
     [SerializeField]
     protected float m_Health;
     [SerializeField] 
@@ -14,6 +58,7 @@ public abstract class MainEnemy : MainScript
     protected Vector2 m_Speed;
 
     public int Index { get; private set; }
+    protected bool CheckCollisionInFixed { get; set; }
 
     public MoveDirection Movedirection { get => m_MoveDirection; protected set => m_MoveDirection = value; }
     protected MoveDirection CurrentDirection { get; set; }
@@ -33,8 +78,118 @@ public abstract class MainEnemy : MainScript
     // Update is called once per frame
     public override void Update()
     {
+        GotHitLastFrame = false;
+
+        Move();
+
         base.Update();
     }
+
+    public virtual void FixedUpdate()
+    {
+        if (CheckCollisionInFixed)
+            DamageToPlayer();
+        CheckCollisionInFixed = false;
+    }
+
+    private void Move()
+    {
+
+        if (CurrentDirection.HasFlag(MoveDirection.UP))
+        {
+            Up();
+        }
+        else if (CurrentDirection.HasFlag(MoveDirection.DOWN))
+        {
+            Down();
+        }
+        if (CurrentDirection.HasFlag(MoveDirection.LEFT))
+        {
+            Left();
+        }
+        else if (CurrentDirection.HasFlag(MoveDirection.RIGHT))
+        {
+            Right();
+        }
+
+    }
+
+    /// <summary>
+    /// Move object upwards
+    /// </summary>
+    private void Up()
+    {
+        RBody.velocity = new Vector3(
+            RBody.velocity.x,
+            m_Speed.y,
+            RBody.velocity.z
+            );
+
+        if (this.transform.position.y >= HighestYPosition)
+        {
+            // Remove upwards direction from current direction
+            CurrentDirection &= ~MoveDirection.UP;
+
+            // Add downwards direction to current direction
+            CurrentDirection = CurrentDirection | MoveDirection.DOWN;
+        }
+    }
+
+    /// <summary>
+    /// Move object down
+    /// </summary>
+    private void Down()
+    {
+        RBody.velocity = new Vector3(
+            RBody.velocity.x,
+            -m_Speed.y,
+            RBody.velocity.z
+            );
+
+        if (this.transform.position.y <= LowestYPosition)
+        {
+            CurrentDirection &= ~MoveDirection.DOWN;
+            CurrentDirection = CurrentDirection | MoveDirection.UP;
+        }
+    }
+
+    /// <summary>
+    /// Move object to the left
+    /// </summary>
+    private void Left()
+    {
+        RBody.velocity = new Vector3(
+            RBody.velocity.x,
+            RBody.velocity.y,
+            -m_Speed.x
+            );
+
+        if (this.transform.position.z <= LowestZPosition)
+        {
+            CurrentDirection &= ~MoveDirection.LEFT;
+            CurrentDirection = CurrentDirection | MoveDirection.RIGHT;
+        }
+    }
+
+
+    /// <summary>
+    /// Move object to the right
+    /// </summary>
+    private void Right()
+    {
+        RBody.velocity = new Vector3(
+            RBody.velocity.x,
+            RBody.velocity.y,
+            m_Speed.x
+            );
+
+        if (this.transform.position.z >= HighestZPosition)
+        {
+            CurrentDirection &= ~MoveDirection.RIGHT;
+            CurrentDirection = CurrentDirection | MoveDirection.LEFT;
+        }
+    }
+
 
     private void SetCurrentDirection()
     {
@@ -62,6 +217,7 @@ public abstract class MainEnemy : MainScript
     public void GetDamage(float _damage)
     {
         m_Health -= _damage;
+        GotHitLastFrame = true;
 
         if (m_Health <= 0) Die();
     }
@@ -70,5 +226,29 @@ public abstract class MainEnemy : MainScript
     {
         EnemyManager.Get.RemoveEnemy(Index);
         Destroy(this.gameObject);
+    }
+
+    private void DamageToPlayer()
+    {
+        if (GotHitLastFrame) return;
+
+        Debug.Log("OUCH");
+    }
+
+    protected virtual void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject == PlayerManager.Get.Player.gameObject)
+        {
+            CheckCollisionInFixed = true;
+        }
+    }
+
+
+
+
+    public enum GroundType
+    {
+        GROUND,
+        AIR
     }
 }

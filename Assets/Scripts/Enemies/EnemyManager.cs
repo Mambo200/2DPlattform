@@ -9,6 +9,8 @@ public class EnemyManager : MainScript
     {
         get
         {
+            if (instance == null)
+                instance = GetInstance();
             return instance;
         }
     }
@@ -19,16 +21,8 @@ public class EnemyManager : MainScript
     public override void Start()
     {
         base.Start();
-        if(instance != null)
-        {
-            Debug.LogWarning("Enemymanager already exists. Old manager will be overwritten...");
-        }
-
-        instance = GameObject.FindObjectOfType<EnemyManager>();
-        if(instance == null)
-        {
-            Debug.LogWarning("No Enemymanager found.");
-        }
+        if (instance == null)
+            instance = GetInstance();
 
         if (char.IsWhiteSpace(splitChar))
         {
@@ -37,6 +31,29 @@ public class EnemyManager : MainScript
         }
     }
 
+    private static EnemyManager GetInstance()
+    {
+        if (instance != null)
+        {
+            Debug.LogWarning("Enemymanager already exists. Old manager will be overwritten...");
+        }
+
+        EnemyManager temp = GameObject.FindObjectOfType<EnemyManager>();
+        if (temp == null)
+        {
+            Debug.LogWarning("No Enemymanager found.");
+        }
+
+
+
+        return temp;
+    }
+
+    /// <summary>
+    /// Add Ememy to List
+    /// </summary>
+    /// <param name="_enemy">Enemy to add</param>
+    /// <returns>Index of Enemy</returns>
     public int AddEnemy(MainEnemy _enemy)
     {
         _enemy.gameObject.name += splitChar + lastIndex.ToString();
@@ -45,13 +62,24 @@ public class EnemyManager : MainScript
 
     }
     
+    /// <summary>
+    /// Remove Enemy by Index
+    /// </summary>
+    /// <param name="_index">Index of Enemy</param>
+    /// <returns>return True if Enemy could be removes successfully</returns>
     public bool RemoveEnemy(int _index)
     {
         return EnemyList.Remove(_index);
     }
-    
+
 
     #region Get Enemy Methods
+
+    /// <summary>
+    /// Get Enemy by Name
+    /// </summary>
+    /// <param name="_name">Name of Gameobject</param>
+    /// <returns>If no Enemy could be found return null, else return an Enemy</returns>
     public MainEnemy GetEnemy(string _name)
     {
         int index = GetIndex(_name);
@@ -59,6 +87,11 @@ public class EnemyManager : MainScript
         return EnemyList[index];
     }
 
+    /// <summary>
+    /// Get Enemy by GameObject
+    /// </summary>
+    /// <param name="_gameObject">Enemy</param>
+    /// <returns>If no Enemy could be found return null, else return an Enemy</returns>
     public MainEnemy GetEnemy(GameObject _gameObject)
     {
         return GetEnemy(_gameObject.name);
@@ -67,6 +100,12 @@ public class EnemyManager : MainScript
 
 
     #region Get Index
+
+    /// <summary>
+    /// Get Index by Name
+    /// </summary>
+    /// <param name="_name">Name of Gameobject</param>
+    /// <returns>return Index of <see cref="EnemyList"/>. If no Enemy could be found return -1</returns>
     public int GetIndex(string _name)
     {
         string[] splitName = _name.Split(splitChar);
@@ -80,13 +119,24 @@ public class EnemyManager : MainScript
         return index;
     }
 
+    /// <summary>
+    /// Get Index by GameObject
+    /// </summary>
+    /// <param name="_gameObject">GameObject of Enemy</param>
+    /// <returns>return Index of <see cref="EnemyList"/>. If no Enemy could be found return -1</returns>
     public int GetIndex(GameObject _gameObject)
     {
         return GetIndex(_gameObject.name);
     }
 
+    /// <summary>
+    /// Get Index by Enemy
+    /// </summary>
+    /// <param name="_enemy">Enemy class</param>
+    /// <returns>return Index of <see cref="EnemyList"/>. If no Enemy could be found or if enemy is null return -1</returns>
     public int GetIndex(MainEnemy _enemy)
     {
+        if (_enemy == null) return -1;
         foreach (KeyValuePair<int, MainEnemy> item in EnemyList)
         {
             if (item.Value == _enemy)

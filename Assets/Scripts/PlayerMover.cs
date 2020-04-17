@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(CapsuleCollider), typeof(Rigidbody))]
 public class PlayerMover : MainScript
 {
     /// <summary>
@@ -13,12 +14,7 @@ public class PlayerMover : MainScript
     /// <summary>
     /// Collider of this Object
     /// </summary>
-    private Collider[] AllCollider { get; set; }
-
-    /// <summary>
-    /// Collider with trigger of this object
-    /// </summary>
-    private Collider TriggerCollider { get; set; }
+    private Collider CurrentCollider { get; set; }
 
     /// <summary>
     /// Movementspeed of Player
@@ -78,17 +74,7 @@ public class PlayerMover : MainScript
     public override void Start()
     {
         RBody = GetComponent<Rigidbody>();
-        AllCollider = GetComponents<BoxCollider>();
-
-        foreach (Collider item in AllCollider)
-        {
-            if (item.isTrigger)
-            {
-                TriggerCollider = item;
-                break;
-            }
-        }
-
+        CurrentCollider = GetComponent<CapsuleCollider>();
         Respawnmanager.Get.AddItem(
             this.gameObject,
             () =>
@@ -98,22 +84,26 @@ public class PlayerMover : MainScript
                 InDash = false;
             }
             );
-
-        Physics.IgnoreCollision(TriggerCollider, AllCollider[1], true);
+        PlayerManager.Get.Player = this;
     }
 
     // Update is called once per frame
     public override void Update()
     {
         Grounded = IsGrounded();
+    }
+
+    private void FixedUpdate()
+    {
         Vector3 toMove = new Vector3(
-            0,
-            0,
-            GetMovement(m_DashAllowed) * m_MovementSpeed
-            );
+    0,
+    0,
+    GetMovement(m_DashAllowed) * m_MovementSpeed
+    );
         Move(toMove);
         Jump();
         VelocityCheck();
+
     }
 
     /// <summary>
@@ -214,14 +204,26 @@ public class PlayerMover : MainScript
     /// </summary>
     private bool IsGrounded()
     {
-        bool hit = Physics.Raycast(
-            transform.position,
+//        bool hit = Physics.Raycast(
+//            transform.position + Vector3.up,
+//            -Vector3.up,
+//            out RaycastHit info,
+//            (1.1f)
+//            );
+
+        RaycastHit[] info = Physics.RaycastAll(
+            transform.position + new Vector3(0,0.1f,0),
             -Vector3.up,
-            out RaycastHit info,
-            (AllCollider[1].bounds.extents.y + 0.1f)
+            (1.1f)
             );
 
-        return hit;
+        if (info == null) return false;
+        foreach (RaycastHit col in info)
+        {
+            if (col.transform.gameObject.tag == "Ground")
+                return true;
+        }
+        return false;
     }
 
     private bool TriggerEnemyHitCheck(Collider _other)
@@ -273,6 +275,6 @@ public class PlayerMover : MainScript
 
     private void OnDestroy()
     {
-        MainRespawnManager.Get.RemoveItem(this.gameObject);
+        Respawnmanager.Get.RemoveItem(this.gameObject);
     }
 }
